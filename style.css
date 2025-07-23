@@ -1,0 +1,72 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+
+header{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.reset-home-container{
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+}
+
+
+main{
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    height: 100vh;
+    margin-top: 50px;
+}
+
+.destination-container{
+    display: flex;
+    gap: 40px;
+}
+
+.sub-container{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.vehicles-list{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.single-vehicle-container{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.find-container{
+    display: flex;
+    justify-content: center;
+    margin-top: 100px;
+}
+
+footer{
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+}

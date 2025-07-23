@@ -1,8 +1,14 @@
-const planetsAPI = "https://ﬁndfalcone.geektrust.com/planets";
-const vehiclesAPI = "https://ﬁndfalcone.geektrust.com/vehicles";
+const planetsAPI = "https://ﬁndfalcone.geektrust.com/planets"; //GET
+const vehiclesAPI = "https://ﬁndfalcone.geektrust.com/vehicles"; //GET
+const tokenAPI = "https://ﬁndfalcone.geektrust.com/token"; //POST
+const findAPI = "https://findfalcone.geektrust.com/find";
+//POST
 
 const selectedPlanets = [null, null, null, null];
 const selectedVehicles = [null, null, null, null];
+
+let cachedPlanetData = [];
+let cachedVehicleData = [];
 
 async function fetchAllPlanets() {
   let response = await fetch(planetsAPI, {
@@ -25,18 +31,6 @@ async function fetchAllVehicles() {
   let data = await response.json();
 
   return data;
-}
-
-function showVehicles(inputData) {
-  vehiclesList.style.display = "flex";
-  vehiclesList.innerHTML = "";
-
-  inputData?.map((ele) => {
-    vehiclesList.innerHTML += `<div class="single-vehicle-container">
-            <input type="radio" id="${ele.name}" name="vehicles"/>
-                 <label for="${ele?.name}">${ele?.name}</label>
-        </div>`;
-  });
 }
 
 function renderDropDowns(inputPlanetsData, inputVehiclesData) {
@@ -82,11 +76,15 @@ function renderDropDowns(inputPlanetsData, inputVehiclesData) {
     planetDiv.appendChild(dropdown);
 
     if (selectedPlanets[i]) {
+      console.log(inputVehiclesData, "inside render dropdown");
+
       const vehicleUI = renderVehicles(
         i,
         selectedVehicles[i],
-        inputVehiclesData
+        cachedVehicleData,
+        cachedPlanetData
       );
+      console.log(vehicleUI, "vehicle UI");
       planetDiv.appendChild(vehicleUI);
     }
 
@@ -94,11 +92,22 @@ function renderDropDowns(inputPlanetsData, inputVehiclesData) {
   }
 }
 
-function renderVehicles(i, selectedVehicleName, inputVehiclesData) {
+function renderVehicles(
+  i,
+  selectedVehicleName,
+  inputVehiclesData,
+  inputPlanetsData
+) {
+  const planetName = selectedPlanets[i];
+  const planetObj = cachedPlanetData.find((p) => p.name === planetName);
+
   const vehicleGroup = document.createElement("div");
   vehicleGroup.innerHTML = `<strong>Select Vehicle:</strong><br>`;
 
   inputVehiclesData?.forEach((vehicle) => {
+    const usedCount = selectedVehicles.filter((v) => v === vehicle.name).length;
+    const remaining = vehicle.total_no - usedCount;
+
     const radio = document.createElement("input");
     radio.type = "radio";
     radio.name = `vehicle-${i}`;
@@ -108,16 +117,28 @@ function renderVehicles(i, selectedVehicleName, inputVehiclesData) {
       radio.checked = true;
     }
 
+    if (
+      (planetObj && planetObj.distance > vehicle.max_distance) ||
+      remaining <= 0
+    ) {
+      radio.disabled = true;
+    }
+
     radio.onchange = () => {
       selectedVehicles[i] = vehicle.name;
-      // renderDropDowns(planetData,vehicleData);
+      renderDropDowns(cachedPlanetData, cachedVehicleData);
+      updateSummary();
     };
 
     const label = document.createElement("label");
     label.style.display = "block";
     label.appendChild(radio);
     label.appendChild(
-      document.createTextNode(`${vehicle.name}-${vehicle.total_no} available`)
+      document.createTextNode(
+        `${vehicle.name}-${remaining} available` +
+          (planetObj.distance > vehicle.max_distance ? "[out of range]" : "") +
+          (remaining <= 0 ? "[No Units Left]" : "")
+      )
     );
     vehicleGroup.appendChild(label);
   });
@@ -125,9 +146,96 @@ function renderVehicles(i, selectedVehicleName, inputVehiclesData) {
   return vehicleGroup;
 }
 
+function updateSummary() {
+  let totalTime = 0;
+  let selections = [];
+  for (let i = 0; i < 4; i++) {
+    const planetName = selectedPlanets[i];
+    const vehicleName = selectedVehicles[i];
+
+    if (planetName && vehicleName) {
+      const planet = cachedPlanetData.find((p) => p.name === planetName);
+      const vehicle = cachedVehicleData.find((v) => v.name === vehicleName);
+
+      if (planet && vehicle) {
+        const time = planet.distance / vehicle.speed;
+        totalTime += time;
+        selections.push(
+          `Destination ${
+            i + 1
+          }: Reached ${planetName} via ${vehicleName} in ${time}`
+        );
+      }
+    }
+  }
+
+  document.getElementById("total-time-taken").innerHTML = totalTime;
+  document.querySelector(".selection-summary").innerHTML = selections?.length
+    ? selections.map((s) => `<li>${s}</li>`).join("")
+    : "";
+
+  const findButton = document.getElementById("find-button");
+  selections.length > 3
+    ? (findButton.disabled = false)
+    : (findButton.disabled = true);
+}
+
+function findFalcone() {
+  console.log(selectedPlanets, "selected planets for finding falcone");
+  const headerBody = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  };
+  let tokenReceived = null;
+  const requestBody = {};
+
+  fetch(tokenAPI, headerBody)
+    .then((res) => res.json())
+    .then((data) => {
+      tokenReceived = data?.token;
+      console.log(tokenReceived, "token received");
+      requestBody["token"] = tokenReceived;
+      requestBody["planet_names"] = selectedPlanets;
+      requestBody["vehicle_names"] = selectedVehicles;
+
+      console.log(JSON.stringify(requestBody, null, 2));
+
+      fetch(findAPI, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      })
+        .then(async (res) => {
+          if (!res.ok) {
+            const text = await res.text(); // Read HTML/text error instead of JSON
+            console.error("❌ API Error:", res.status, text);
+            throw new Error("Non-200 response from /find");
+          }
+          return res.json(); // ✅ safe to parse
+        })
+        .then((data) => {
+          if (data?.status === "success") {
+            alert(
+              `Congratulations King Shan is Happy to find Falcone in ${data?.planet_name}`
+            );
+          } else {
+            alert("Sorry Falcone NOT Found,Please Try Again");
+          }
+        })
+        .catch((err) => alert(err));
+    });
+}
+
 Promise.all([fetchAllPlanets(), fetchAllVehicles()]).then(
   ([planetData, vehicleData]) => {
-    console.log(vehicleData, "vehicle data");
-    renderDropDowns(planetData, vehicleData);
+    cachedPlanetData = planetData;
+    cachedVehicleData = vehicleData;
+    renderDropDowns(cachedPlanetData, cachedVehicleData);
   }
 );

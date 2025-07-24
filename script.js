@@ -9,6 +9,8 @@ let selectedVehicles = [null, null, null, null];
 let cachedPlanetData = [];
 let cachedVehicleData = [];
 
+const resetContainer = document.querySelector(".reset-home-container");
+
 async function fetchAllPlanets() {
   let response = await fetch(planetsAPI, {
     method: "GET",
@@ -32,7 +34,7 @@ async function fetchAllVehicles() {
   return data;
 }
 
-function renderDropDowns(inputPlanetsData, inputVehiclesData) {
+function renderDropDowns(inputPlanetsData) {
   const dropdownContainer = document.querySelector(".destination-container");
   dropdownContainer.innerHTML = "";
 
@@ -41,6 +43,7 @@ function renderDropDowns(inputPlanetsData, inputVehiclesData) {
   //creating 4 dropdowns since there are 4 destinations
   for (let i = 0; i < 4; i++) {
     const planetDiv = document.createElement("div");
+    planetDiv.classList.add("destination-dropdown");
     const dropdown = document.createElement("select");
     const label = document.createElement("label");
     label.textContent = `Destination ${i + 1}`;
@@ -75,15 +78,12 @@ function renderDropDowns(inputPlanetsData, inputVehiclesData) {
     planetDiv.appendChild(dropdown);
 
     if (selectedPlanets[i]) {
-      console.log(inputVehiclesData, "inside render dropdown");
-
       const vehicleUI = renderVehicles(
         i,
         selectedVehicles[i],
         cachedVehicleData,
         cachedPlanetData
       );
-      console.log(vehicleUI, "vehicle UI");
       planetDiv.appendChild(vehicleUI);
     }
 
@@ -180,7 +180,6 @@ function updateSummary() {
 }
 
 function findFalcone() {
-  console.log(selectedPlanets, "selected planets for finding falcone");
   const headerBody = {
     method: "POST",
     headers: {
@@ -195,12 +194,9 @@ function findFalcone() {
     .then((res) => res.json())
     .then((data) => {
       tokenReceived = data?.token;
-      console.log(tokenReceived, "token received");
       requestBody["token"] = tokenReceived;
       requestBody["planet_names"] = selectedPlanets;
       requestBody["vehicle_names"] = selectedVehicles;
-
-      console.log(JSON.stringify(requestBody, null, 2));
 
       fetch(findAPI, {
         method: "POST",
@@ -219,13 +215,6 @@ function findFalcone() {
           return res.json();
         })
         .then((data) => {
-          // if (data?.status === "success") {
-          //   alert(
-          //     `Congratulations King Shan is Happy to find Falcone in ${data?.planet_name}`
-          //   );
-          // } else {
-          //   alert("Sorry Falcone NOT Found,Please Try Again");
-          // }
           window.resultData = data;
           navigateTo("/result");
         })
@@ -236,6 +225,7 @@ function findFalcone() {
 function renderHomePage() {
   const main = document.getElementById("main");
   main.innerHTML = `<h1>Welcome to Find Falcone Game!</h1>
+                    <img src="./assets/falcon.jpg" alt="falcon-image"></img>
                     <button id="start-game-btn">Start Game</button>`;
 
   document
@@ -277,13 +267,13 @@ function renderResultPage() {
   const result = window.resultData || null;
 
   if (result && result.status === "success") {
-    html = `<h2>Falcone Found</h2>
-            <p>Found in Planet ${result.planet_name}</p>
+    html = `<h2>Success! Congratulations on finding falcone.King Shan is mighty pleased!</h2>
+            <h3>Found in Planet ${result.planet_name}</h3>
             <button id="try-again-btn">Play again</button>
     `;
   } else {
     html = `<h2>Falcone not Found</h2>
-          <p>Please try again</p>
+          <h3>Please try again!</h3>
           <button id="try-again-btn">Play again</button>
     `;
   }
@@ -293,13 +283,27 @@ function renderResultPage() {
     document
       .getElementById("try-again-btn")
       .addEventListener("click", function () {
-        resetGame();
+        playAgain();
         navigateTo("/");
       });
   }
 }
-
 function resetGame() {
+  selectedPlanets.fill(null);
+  selectedVehicles.fill(null);
+
+  window.resultData = null;
+
+  const summaryEl = document.querySelector(".selection-summary");
+  if (summaryEl) summaryEl.innerHTML = "";
+
+  const totalTimeEl = document.getElementById("total-time-taken");
+  if (totalTimeEl) totalTimeEl.innerText = "0";
+
+  renderDropDowns(cachedPlanetData, cachedVehicleData);
+}
+
+function playAgain() {
   selectedPlanets.fill(null);
   selectedVehicles.fill(null);
   window.resultData = null;
@@ -307,10 +311,19 @@ function resetGame() {
 
 function router() {
   const path = window.location.pathname;
-  if (path === "/" || path === "") renderHomePage();
-  else if (path === "/game") renderGamePage();
-  else if (path === "/result") renderResultPage();
-  else renderHomePage();
+  if (path === "/" || path === "") {
+    resetContainer.classList.remove("show");
+
+    renderHomePage();
+  } else if (path === "/game") {
+    resetContainer.classList.add("show");
+    renderGamePage();
+  } else if (path === "/result") {
+    resetContainer.classList.remove("show");
+    renderResultPage();
+  } else {
+    renderHomePage();
+  }
 }
 
 function navigateTo(path) {

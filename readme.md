@@ -44,11 +44,15 @@ Your coding problem is to help King Shan ﬁnd Al Falcone.
     - click on start game and navigate to main page.
     - click on find falcone and navigate to result page.
 
+### Future Enhancements
+- Improve the UI because currently it is very basic.
+- Try to code the same problem using REACT library.
+
 
 ### Links
 
 - Git hub Repo URL: [https://github.com/mike15395/finding-falcone-challenge]
-- Live Site URL: []
+- Live Site URL: [https://finding-falcone-challenge.vercel.app/]
  
 ### Author
 - Mikhil Desai 

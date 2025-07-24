@@ -130,11 +130,11 @@ function renderVehicles(
     };
 
     const label = document.createElement("label");
-    label.style.display = "block";
+    label.style.display = "flex";
     label.appendChild(radio);
     label.appendChild(
       document.createTextNode(
-        `${vehicle.name}-${remaining} available` +
+        `${vehicle.name}-(${remaining} available)` +
           (planetObj.distance > vehicle.max_distance ? "[out of range]" : "") +
           (remaining <= 0 ? "[No Units Left]" : "")
       )
@@ -257,6 +257,7 @@ function renderGamePage() {
     ([planetData, vehicleData]) => {
       cachedPlanetData = planetData;
       cachedVehicleData = vehicleData;
+
       renderDropDowns(cachedPlanetData, cachedVehicleData);
     }
   );
@@ -267,14 +268,22 @@ function renderResultPage() {
   const result = window.resultData || null;
 
   if (result && result.status === "success") {
-    html = `<h2>Success! Congratulations on finding falcone.King Shan is mighty pleased!</h2>
-            <h3>Found in Planet ${result.planet_name}</h3>
-            <button id="try-again-btn">Play again</button>
+    html = `
+    <section class="result-page">
+      <h2>Success! Congratulations on finding falcone.King Shan is mighty pleased!</h2>
+              <h3>Found in Planet ${result.planet_name}</h3>
+              <img src="./assets/happyKing.png" width="50%" height="50%" alt="happy-king"/>
+              <button id="try-again-btn">Play again</button>
+    </section>
     `;
   } else {
-    html = `<h2>Falcone not Found</h2>
-          <h3>Please try again!</h3>
-          <button id="try-again-btn">Play again</button>
+    html = `
+    <section class="result-page">
+      <h2>Falcone not Found</h2>
+            <h3>Please try again!</h3>
+            <img src="./assets/sadKing.png" width="50%" height="50%" alt=""sad-king/>
+            <button id="try-again-btn">Play again</button>
+    </section>
     `;
   }
 

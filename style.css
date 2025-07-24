@@ -46,6 +46,7 @@ main{
     display: flex;
     flex-direction: row;
     gap: 40px;
+    max-width: 100%;
 }
 
 .destination-dropdown{
@@ -54,7 +55,14 @@ main{
     gap: 10px;
     justify-content: flex-start;
     align-items: flex-start;
-    width: 100%
+}
+
+.result-page{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
 }
 
 .sub-container{

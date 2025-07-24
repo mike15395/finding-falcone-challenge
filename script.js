@@ -1,11 +1,10 @@
 const planetsAPI = "https://ﬁndfalcone.geektrust.com/planets"; //GET
 const vehiclesAPI = "https://ﬁndfalcone.geektrust.com/vehicles"; //GET
 const tokenAPI = "https://ﬁndfalcone.geektrust.com/token"; //POST
-const findAPI = "https://findfalcone.geektrust.com/find";
-//POST
+const findAPI = "https://findfalcone.geektrust.com/find"; //POST
 
-const selectedPlanets = [null, null, null, null];
-const selectedVehicles = [null, null, null, null];
+let selectedPlanets = [null, null, null, null];
+let selectedVehicles = [null, null, null, null];
 
 let cachedPlanetData = [];
 let cachedVehicleData = [];
@@ -213,29 +212,111 @@ function findFalcone() {
       })
         .then(async (res) => {
           if (!res.ok) {
-            const text = await res.text(); // Read HTML/text error instead of JSON
-            console.error("❌ API Error:", res.status, text);
+            const text = await res.text();
+            console.error("API Error:", res.status, text);
             throw new Error("Non-200 response from /find");
           }
-          return res.json(); // ✅ safe to parse
+          return res.json();
         })
         .then((data) => {
-          if (data?.status === "success") {
-            alert(
-              `Congratulations King Shan is Happy to find Falcone in ${data?.planet_name}`
-            );
-          } else {
-            alert("Sorry Falcone NOT Found,Please Try Again");
-          }
+          // if (data?.status === "success") {
+          //   alert(
+          //     `Congratulations King Shan is Happy to find Falcone in ${data?.planet_name}`
+          //   );
+          // } else {
+          //   alert("Sorry Falcone NOT Found,Please Try Again");
+          // }
+          window.resultData = data;
+          navigateTo("/result");
         })
         .catch((err) => alert(err));
     });
 }
 
-Promise.all([fetchAllPlanets(), fetchAllVehicles()]).then(
-  ([planetData, vehicleData]) => {
-    cachedPlanetData = planetData;
-    cachedVehicleData = vehicleData;
-    renderDropDowns(cachedPlanetData, cachedVehicleData);
+function renderHomePage() {
+  const main = document.getElementById("main");
+  main.innerHTML = `<h1>Welcome to Find Falcone Game!</h1>
+                    <button id="start-game-btn">Start Game</button>`;
+
+  document
+    .getElementById("start-game-btn")
+    .addEventListener("click", function () {
+      navigateTo("/game");
+    });
+}
+
+function renderGamePage() {
+  const main = document.getElementById("main");
+  main.innerHTML = ` <h2>Select Planets you want to search in:</h2>
+        <section class="destination-container">
+
+        </section>
+        <section class="result-container">
+            <div>
+                <h2>Total Time Taken:<span id="total-time-taken"></span></h2>
+            </div>
+            <div>
+                <ul class="selection-summary">
+
+                </ul>
+            </div>
+            <button id="find-button" disabled onclick="findFalcone()">Find Falcone</button>
+        </section>`;
+
+  Promise.all([fetchAllPlanets(), fetchAllVehicles()]).then(
+    ([planetData, vehicleData]) => {
+      cachedPlanetData = planetData;
+      cachedVehicleData = vehicleData;
+      renderDropDowns(cachedPlanetData, cachedVehicleData);
+    }
+  );
+}
+
+function renderResultPage() {
+  const main = document.getElementById("main");
+  const result = window.resultData || null;
+
+  if (result && result.status === "success") {
+    html = `<h2>Falcone Found</h2>
+            <p>Found in Planet ${result.planet_name}</p>
+            <button id="try-again-btn">Play again</button>
+    `;
+  } else {
+    html = `<h2>Falcone not Found</h2>
+          <p>Please try again</p>
+          <button id="try-again-btn">Play again</button>
+    `;
   }
-);
+
+  main.innerHTML = html;
+  if (document.getElementById("try-again-btn")) {
+    document
+      .getElementById("try-again-btn")
+      .addEventListener("click", function () {
+        resetGame();
+        navigateTo("/");
+      });
+  }
+}
+
+function resetGame() {
+  selectedPlanets.fill(null);
+  selectedVehicles.fill(null);
+  window.resultData = null;
+}
+
+function router() {
+  const path = window.location.pathname;
+  if (path === "/" || path === "") renderHomePage();
+  else if (path === "/game") renderGamePage();
+  else if (path === "/result") renderResultPage();
+  else renderHomePage();
+}
+
+function navigateTo(path) {
+  history.pushState(null, "", path);
+  router();
+}
+
+window.onpopstate = router;
+window.onload = () => router();

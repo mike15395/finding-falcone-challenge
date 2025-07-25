@@ -44,6 +44,9 @@ Your coding problem is to help King Shan ﬁnd Al Falcone.
     - click on start game and navigate to main page.
     - click on find falcone and navigate to result page.
 
+### Code Flow Chart
+![](./flow-chart/codeFlowChart.png)
+
 ### Future Enhancements
 - Improve the UI because currently it is very basic.
 - Try to code the same problem using REACT library.
